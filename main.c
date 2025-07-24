@@ -24,6 +24,7 @@ typedef struct {
     int y;
     Direction d;
     int apples;
+    
 } Player;
 
 //if there's a change of direction it changes the property of the player, otherwise it continues the movement as it was doing before the check
@@ -31,13 +32,14 @@ typedef struct {
 void checkDirection(Player* p){
     if(IsKeyPressed(KEY_D)||IsKeyPressed(KEY_RIGHT)){
         p->d=RIGHT;
-    }else if(IsKeyPressed(KEY_A)||IsKeyPressed(KEY_LEFT)){
+    }
+    if(IsKeyPressed(KEY_A)||IsKeyPressed(KEY_LEFT)){
         p->d=LEFT;
     }
-    else if (IsKeyPressed(KEY_S)||IsKeyPressed(KEY_DOWN)){
+    if (IsKeyPressed(KEY_S)||IsKeyPressed(KEY_DOWN)){
         p->d =DOWN;
     }
-    else if(IsKeyPressed(KEY_W)|| IsKeyPressed(KEY_UP)){
+    if(IsKeyPressed(KEY_W)|| IsKeyPressed(KEY_UP)){
         p->d = UP;
     }
     
@@ -52,13 +54,16 @@ bool isApplePositionAcceptable(Apple* a ,Player* p){
 void positionApple(Apple* a , Player* p){
     //before i set the apple position i should check that the new position of the apple isnt the same position of the snake, in every part of the snake
     do{
-        a->x = GetRandomValue(0,WIDTH/ROW_SIZE);
-        a->y = GetRandomValue(0,HEIGHT/ROW_SIZE);
+        a->x = GetRandomValue(0,WIDTH/ROW_SIZE-1);
+        a->y = GetRandomValue(0,HEIGHT/ROW_SIZE-1);
     }while(!isApplePositionAcceptable(a,p));
     
 
 
 }
+
+
+//TODO: Function that implements linked list to the snake structure in order to let it expand when it eats an apple.
 void checkCollision(Apple* a,  Player* p){
     if(a->x == p->x && p->y == a->y){
         p->apples++;
@@ -67,8 +72,8 @@ void checkCollision(Apple* a,  Player* p){
 }
 
 void setUpRandomly(Player* p,Apple* a ){
-    p->x = GetRandomValue(0,WIDTH/ROW_SIZE);
-    p->y = GetRandomValue(0,HEIGHT/ROW_SIZE);
+    p->x = GetRandomValue(0,WIDTH/ROW_SIZE-1);
+    p->y = GetRandomValue(0,HEIGHT/ROW_SIZE-1);
     printf("starting position (%d,%d)",p->x,p->y);
     p->d = NONE;
     p->apples=0;
@@ -91,21 +96,22 @@ void movePlayer(Player* p){
         default:
             printf("no direction");
     }
-    if(p->x > WIDTH/ROW_SIZE){
+    if(p->x > (WIDTH/ROW_SIZE)-1){
         p->x = 0;
     }
     else if(p->x < 0){
-        p->x = WIDTH/ROW_SIZE;
+        p->x = (WIDTH/ROW_SIZE)-1;
     }
-    if (p->y > HEIGHT/ROW_SIZE){
+    if (p->y > (HEIGHT/ROW_SIZE)-1){
         p->y = 0; 
     }else if(p->y <0){
-        p->y = HEIGHT/ROW_SIZE;
+        p->y = (HEIGHT/ROW_SIZE)-1;
     }
     
 }
 void printGame(Player p,Apple a){
     /*print a grid WIDTH-HEIGHT with squares */
+    char appleToString[4];
     for(int y = 0;y<HEIGHT/ROW_SIZE ;y++){
         for(int x = 0; x < WIDTH/ROW_SIZE;x++){
             DrawRectangleLines(x*ROW_SIZE,y*ROW_SIZE ,ROW_SIZE, ROW_SIZE,WHITE); 
@@ -116,6 +122,8 @@ void printGame(Player p,Apple a){
     DrawRectangle(p.x*ROW_SIZE,p.y*ROW_SIZE,ROW_SIZE,ROW_SIZE,GREEN);
     //draw the apple
     DrawRectangle(a.x*ROW_SIZE,a.y*ROW_SIZE,ROW_SIZE,ROW_SIZE,RED);
+    sprintf(appleToString,"%d",p.apples);
+    DrawText(appleToString, (0.9)*WIDTH,20,20,WHITE);
 }
 
 int main(void)
