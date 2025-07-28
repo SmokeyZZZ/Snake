@@ -59,23 +59,8 @@ void positionApple(Apple* a , Player* p){
 }
 //Function that implements linked list adding to the end 
 //critica
-Player* addANode(Player* tail){
-    Player* newNode = malloc(sizeof(Player));
-    newNode->x = tail->x;
-    newNode->y = tail->y;
-    newNode->d = tail->d;
-    newNode->next = NULL;
-    tail->next = newNode;
-    return newNode;
-}
 
-void checkCollision(Apple* a,  Player* head,Player** tail){
-    if(a->x == head->x && head->y == a->y){
-        apples++;
-        positionApple(a,head);
-        *tail = addANode(*tail);
-    }
-}
+
 void printList(Player* head){
     Player* temp = head;
     printf("[");
@@ -95,6 +80,32 @@ void setUpRandomly(Player* p,Apple* a ){
     apples=0;
     positionApple(a,p);
 }
+Player* addANode(Player* tail){
+    Player* newNode = malloc(sizeof(Player));
+    switch(tail->d){
+        case LEFT:
+            newNode->x = tail->x +1;
+            newNode->y = tail->y;
+            break;
+        case RIGHT:
+            newNode->x = tail->x -1;
+            newNode->y = tail->y;
+            break;
+        case UP:
+            newNode->x = tail->x ;
+            newNode->y = tail->y+1;
+        break;
+
+        case DOWN:
+            newNode->x = tail->x;
+            newNode->y = tail->y-1;
+    }
+    newNode->d = tail->d;
+    newNode->next = NULL;
+    tail->next = newNode;
+    return newNode;
+}
+
 //critica
 void moveSinglePiece(Player* p){
     switch(p->d){
@@ -140,6 +151,13 @@ void movePlayer(Player* head){
         temp=(Player*)temp->next;
     }
 }
+void checkCollision(Apple* a,  Player* head,Player** tail){
+    if(a->x == head->x && head->y == a->y){
+        apples++;
+        positionApple(a,head);
+        *tail = addANode(*tail);
+    }
+}
 void drawSnake(Player* head){
     Player* temp =  head;
     while(temp!=NULL){
@@ -179,7 +197,6 @@ int main(void)
         checkDirection(head);
         movePlayer(head);
         checkCollision(&a,head,&tail);
-        printList(head);
         EndDrawing();
     }
     CloseWindow();
