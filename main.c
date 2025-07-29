@@ -8,6 +8,12 @@
 #define HEIGHT 600
 
 int apples;
+typedef struct{
+    int height;
+    int width;
+    int x;
+    int y;
+}Game;
 typedef enum {
     LEFT,
     RIGHT,
@@ -46,8 +52,8 @@ void checkDirection(Player* p){
 }
 bool isApplePositionAcceptable(Apple* a ,Player* p){
     //at the moment i only check if the head of the snake and the apple dont collide
-    if(a->x == p->x && a->y == p->y )return false;
     return true;
+    if(a->x == p->x && a->y == p->y )return false;
 
 }
 void positionApple(Apple* a , Player* p){
@@ -57,28 +63,15 @@ void positionApple(Apple* a , Player* p){
         a->y = GetRandomValue(0,HEIGHT/ROW_SIZE-1);
     }while(!isApplePositionAcceptable(a,p));
 }
-//Function that implements linked list adding to the end 
-//critica
-
-
-void printList(Player* head){
-    Player* temp = head;
-    printf("[");
-    while(temp!=NULL){
-        printf("(x:%d , y:%d)",temp->x,temp->y);
-        temp=(Player*)temp->next;
-    }
-    printf("]");
-}
-
-void setUpRandomly(Player* p,Apple* a ){
-    p->x = GetRandomValue(0,WIDTH/ROW_SIZE-1);
-    p->y = GetRandomValue(0,HEIGHT/ROW_SIZE-1);
-    printf("starting position (%d,%d)",p->x,p->y);
-    p->d = NONE;
-    p->next = NULL;
+void reset(Player* head,Apple* a , Player** tail){
+    head->x = GetRandomValue(0,(HEIGHT/ROW_SIZE)-1);
+    head->y = GetRandomValue(0,(HEIGHT/ROW_SIZE)-1);
+    printf("starting position (%d,%d)",head->x,head->y);
+    head->d = NONE;
+    head->next = NULL;
     apples=0;
-    positionApple(a,p);
+    *tail = head;
+    positionApple(a,head);
 }
 Player* addANode(Player* tail){
     Player* newNode = malloc(sizeof(Player));
@@ -124,18 +117,7 @@ void moveSinglePiece(Player* p){
         default:
             printf("no direction");
     }
-    if(p->x > (WIDTH/ROW_SIZE)-1){
-        p->x = 0;
-    }
-    else if(p->x < 0){
-        p->x = (WIDTH/ROW_SIZE)-1;
-    }
-    if (p->y > (HEIGHT/ROW_SIZE)-1){
-        p->y = 0; 
-    }else if(p->y <0){
-        p->y = (HEIGHT/ROW_SIZE)-1;
-
-    }
+    
 }
 //critica
 void movePlayer(Player* head){
@@ -150,12 +132,30 @@ void movePlayer(Player* head){
 
         temp=(Player*)temp->next;
     }
+    
+}
+bool collisionWithItself(Player* head){
+    Player* temp = head->next;
+    while(temp!= NULL){
+        if(head->x == temp->x && temp->y==head->y){
+            return true;
+        }
+        temp= temp->next;
+    }
+    return false;
+}
+bool collisionWithBorder(Player* head){
+    if(head->x < 0 || head->y < 0 || head->x > (WIDTH/ROW_SIZE)-1 ||head->y > (HEIGHT/ROW_SIZE)-1)return true;
+    return false;
 }
 void checkCollision(Apple* a,  Player* head,Player** tail){
     if(a->x == head->x && head->y == a->y){
         apples++;
         positionApple(a,head);
         *tail = addANode(*tail);
+    }
+    if(collisionWithItself(head)||collisionWithBorder(head)){
+        reset(head,a,tail);
     }
 }
 void drawSnake(Player* head){
@@ -189,7 +189,7 @@ int main(void)
     Player* head = malloc(sizeof(Player));
     Player* tail = head ;
     Apple a;
-    setUpRandomly(head,&a);
+    reset(head,&a,&tail);
     while (!WindowShouldClose()){
         BeginDrawing();
         ClearBackground(BLACK);
