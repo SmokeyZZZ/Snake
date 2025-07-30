@@ -4,10 +4,13 @@
 #include <stdlib.h>
 
 #define ROW_SIZE 30
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 700
+#define HEIGHT 500
 
-int apples;
+int apples =0 ;
+char appleToString[15];
+int bestScore=0;
+char bestScoreToString[15];
 typedef struct{
     int height;
     int width;
@@ -52,26 +55,33 @@ void checkDirection(Player* p){
 }
 bool isApplePositionAcceptable(Apple* a ,Player* p){
     //at the moment i only check if the head of the snake and the apple dont collide
-    return true;
-    if(a->x == p->x && a->y == p->y )return false;
+    Player* temp = p;
+    bool isAcceptable= true;
+    while(temp!=NULL){
+        if(temp->x == a->x &&temp->y == a->y)isAcceptable = false;
+    };
+    return isAcceptable;
 
 }
-void positionApple(Apple* a , Player* p){
+void positionApple(Apple* a , Player* p,Game g){
     //before i set the apple position i should check that the new position of the apple isnt the same position of the snake, in every part of the snake
     do{
-        a->x = GetRandomValue(0,WIDTH/ROW_SIZE-1);
-        a->y = GetRandomValue(0,HEIGHT/ROW_SIZE-1);
+        a->x = GetRandomValue(0,g.width/ROW_SIZE-1);
+        a->y = GetRandomValue(0,g.height/ROW_SIZE-1);
     }while(!isApplePositionAcceptable(a,p));
 }
-void reset(Player* head,Apple* a , Player** tail){
-    head->x = GetRandomValue(0,(HEIGHT/ROW_SIZE)-1);
-    head->y = GetRandomValue(0,(HEIGHT/ROW_SIZE)-1);
+void reset(Player* head,Apple* a , Player** tail, Game g){
+    head->x = GetRandomValue(0,(g.width/ROW_SIZE)-1);
+    head->y = GetRandomValue(0,(g.width/ROW_SIZE)-1);
     printf("starting position (%d,%d)",head->x,head->y);
     head->d = NONE;
     head->next = NULL;
+    if(apples>bestScore){
+        bestScore = apples;
+    }
     apples=0;
     *tail = head;
-    positionApple(a,head);
+    positionApple(a,head, g);
 }
 Player* addANode(Player* tail){
     Player* newNode = malloc(sizeof(Player));
@@ -144,59 +154,73 @@ bool collisionWithItself(Player* head){
     }
     return false;
 }
-bool collisionWithBorder(Player* head){
-    if(head->x < 0 || head->y < 0 || head->x > (WIDTH/ROW_SIZE)-1 ||head->y > (HEIGHT/ROW_SIZE)-1)return true;
+bool collisionWithBorder(Player* head,Game g){
+    if(head->x > (g.width/ROW_SIZE )- 1||head->y > (g.height/ROW_SIZE )-1 ||head->x <0 ||head->y<0)return true;
+    printf("Head at (%d, %d)\n", head->x, head->y);
     return false;
 }
-void checkCollision(Apple* a,  Player* head,Player** tail){
+void checkCollision(Apple* a,  Player* head,Player** tail,Game g){
     if(a->x == head->x && head->y == a->y){
         apples++;
-        positionApple(a,head);
+        positionApple(a,head,g);
         *tail = addANode(*tail);
     }
-    if(collisionWithItself(head)||collisionWithBorder(head)){
-        reset(head,a,tail);
+    if(collisionWithItself(head)||collisionWithBorder(head,g)){
+        reset(head,a,tail,g);
     }
 }
-void drawSnake(Player* head){
+void drawSnake(Player* head,Game g){
     Player* temp =  head;
     while(temp!=NULL){
-        DrawRectangle((*temp).x*ROW_SIZE,(*temp).y*ROW_SIZE,ROW_SIZE,ROW_SIZE,GREEN);
+        DrawRectangle((*temp).x*ROW_SIZE +g.x,(*temp).y*ROW_SIZE +g.y,ROW_SIZE,ROW_SIZE,GREEN);
         temp=(Player*)temp->next;
     }
 }
-void printGame(Player* head,Apple a){
+void printGame(Player* head,Apple a,Game g){
     /*print a grid WIDTH-HEIGHT with squares */
-    char appleToString[4];
-    for(int y = 0;y<HEIGHT/ROW_SIZE ;y++){
-        for(int x = 0; x < WIDTH/ROW_SIZE;x++){
-            DrawRectangleLines(x*ROW_SIZE,y*ROW_SIZE ,ROW_SIZE, ROW_SIZE,WHITE);    
+    
+
+    for(int y = 0;y<(g.height/ROW_SIZE);y++){
+        for(int x = 0; x < (g.width /ROW_SIZE);x++){
+            DrawRectangleLines(x*ROW_SIZE+g.x
+                ,y*ROW_SIZE+g.y 
+                ,ROW_SIZE, ROW_SIZE,WHITE);    
         }
     }
     //draw the player
-    drawSnake(head);
+    drawSnake(head,g);
     //draw the apple
-    DrawRectangle(a.x*ROW_SIZE,a.y*ROW_SIZE,ROW_SIZE,ROW_SIZE,RED);
-    sprintf(appleToString,"%d",apples);
-    //that's not the final ui 
-    DrawText(appleToString, (0.9)*WIDTH,20,20,WHITE);
+    DrawRectangle(a.x*ROW_SIZE+g.x,a.y*ROW_SIZE+g.y,ROW_SIZE,ROW_SIZE,RED);
+    
+    sprintf(appleToString,"ACTUAL: %d",apples);
+    sprintf(bestScoreToString,"BEST SCORE: %d",bestScore); 
+    DrawText(appleToString, g.x+g.width+40,20,20,WHITE);
+    DrawText(bestScoreToString, g.x+g.width+40,50,20,WHITE);
 }
-
+void setUpGame(Game* g){
+    g->x = 15;
+    g->y=15;
+    g->width=400;
+    g->height=400;
+}
 int main(void)
 {
     InitWindow(WIDTH, HEIGHT, "Snake");
     SetTargetFPS(12);
+    Game g;
+    setUpGame(&g);
     Player* head = malloc(sizeof(Player));
     Player* tail = head ;
     Apple a;
-    reset(head,&a,&tail);
+    reset(head,&a,&tail,g);
     while (!WindowShouldClose()){
-        BeginDrawing();
+        
+        BeginDrawing();       
         ClearBackground(BLACK);
-        printGame(head,a);
+        printGame(head,a,g);
         checkDirection(head);
         movePlayer(head);
-        checkCollision(&a,head,&tail);
+        checkCollision(&a,head,&tail,g);
         EndDrawing();
     }
     CloseWindow();
